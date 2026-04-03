@@ -8,200 +8,176 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Mona Mayhem – GitHub Contribution Battle Arena</title>
+		<title>Mona Mayhem - GitHub Contribution Battle Arena</title>
 		<style>
-			*, *::before, *::after { box-sizing: border-box; }
+			* {
+				box-sizing: border-box;
+			}
 
 			body {
 				margin: 0;
 				font-family: system-ui, sans-serif;
 				background: #0d1117;
 				color: #e6edf3;
-				min-height: 100vh;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				padding: 2rem 1rem;
+			}
+
+			main {
+				max-width: 860px;
+				margin: 0 auto;
+				padding: 2rem 1rem 3rem;
 			}
 
 			header {
+				margin-bottom: 1.5rem;
 				text-align: center;
-				margin-bottom: 2rem;
 			}
 
-			header h1 {
+			h1 {
+				margin: 0;
 				font-size: 2rem;
-				margin: 0 0 0.25rem;
 			}
 
 			header p {
+				margin: 0.5rem 0 0;
 				color: #8b949e;
-				margin: 0;
 			}
 
 			.battle-form {
-				display: flex;
-				flex-wrap: wrap;
+				display: grid;
 				gap: 1rem;
-				align-items: flex-end;
-				justify-content: center;
-				width: 100%;
-				max-width: 640px;
-				margin-bottom: 1.5rem;
+				margin-bottom: 0.75rem;
 			}
 
-			.player-input {
-				display: flex;
-				flex-direction: column;
-				gap: 0.4rem;
-				flex: 1 1 180px;
+			.field {
+				display: grid;
+				gap: 0.35rem;
 			}
 
-			.player-input label {
-				font-size: 0.85rem;
-				color: #8b949e;
+			label {
 				font-weight: 600;
-				text-transform: uppercase;
-				letter-spacing: 0.05em;
 			}
 
-			.player-input input {
-				padding: 0.55rem 0.75rem;
+			input {
+				padding: 0.65rem 0.75rem;
+				font-size: 1rem;
 				border-radius: 6px;
 				border: 1px solid #30363d;
 				background: #161b22;
 				color: #e6edf3;
-				font-size: 1rem;
-				outline: none;
-				transition: border-color 0.15s;
 			}
 
-			.player-input input:focus {
-				border-color: #58a6ff;
-			}
-
-			.vs-badge {
-				font-size: 1.1rem;
-				font-weight: 700;
-				color: #f78166;
-				padding-bottom: 0.35rem;
-				flex: 0 0 auto;
-			}
-
-			.battle-btn {
-				padding: 0.6rem 1.5rem;
+			button {
+				padding: 0.7rem 1rem;
+				border: 0;
 				border-radius: 6px;
-				border: none;
-				background: #238636;
-				color: #fff;
 				font-size: 1rem;
 				font-weight: 600;
+				background: #238636;
+				color: #ffffff;
 				cursor: pointer;
-				transition: background 0.15s;
-				flex: 0 0 auto;
 			}
 
-			.battle-btn:hover:not(:disabled) {
-				background: #2ea043;
-			}
-
-			.battle-btn:disabled {
-				opacity: 0.6;
+			button:disabled {
+				opacity: 0.65;
 				cursor: not-allowed;
 			}
 
-			.error-msg {
-				color: #f85149;
-				font-size: 0.9rem;
+			.feedback {
+				min-height: 1.25rem;
 				margin-bottom: 1rem;
-				min-height: 1.2em;
-				text-align: center;
+				font-size: 0.95rem;
+			}
+
+			.feedback.error {
+				color: #ff7b72;
+			}
+
+			.feedback.loading {
+				color: #8b949e;
 			}
 
 			.results {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 1.5rem;
-				justify-content: center;
-				width: 100%;
-				max-width: 900px;
+				display: grid;
+				gap: 1rem;
 			}
 
-			.player-card {
-				background: #161b22;
+			.winner {
+				margin: 0;
+				font-weight: 700;
+			}
+
+			.cards {
+				display: grid;
+				gap: 1rem;
+			}
+
+			.card {
 				border: 1px solid #30363d;
 				border-radius: 8px;
-				padding: 1.25rem;
-				flex: 1 1 300px;
-				min-width: 0;
+				background: #161b22;
+				padding: 1rem;
 			}
 
-			.player-card h2 {
-				margin: 0 0 0.25rem;
+			.card h2 {
+				margin: 0 0 0.5rem;
 				font-size: 1.1rem;
 			}
 
-			.player-card .total {
-				color: #8b949e;
-				font-size: 0.85rem;
-				margin-bottom: 0.75rem;
+			.card p {
+				margin: 0.25rem 0;
+				color: #c9d1d9;
 			}
 
-			.contribution-grid {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2px;
-			}
+			@media (min-width: 700px) {
+				.battle-form {
+					grid-template-columns: 1fr 1fr auto;
+					align-items: end;
+				}
 
-			.contribution-grid .day {
-				width: 10px;
-				height: 10px;
-				border-radius: 2px;
-				background: #161b22;
-				border: 1px solid #21262d;
-			}
-
-			.loading {
-				color: #8b949e;
-				font-size: 0.9rem;
-				padding: 1rem 0;
-				text-align: center;
-			}
-
-			.no-data {
-				color: #8b949e;
-				font-size: 0.85rem;
+				.cards {
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+				}
 			}
 		</style>
 	</head>
 	<body>
-		<header>
-			<h1>⚔️ Mona Mayhem</h1>
-			<p>GitHub Contribution Battle Arena</p>
-		</header>
+		<main>
+			<header>
+				<h1>Mona Mayhem</h1>
+				<p>GitHub Contribution Battle Arena</p>
+			</header>
 
-		<div class="battle-form">
-			<div class="player-input">
-				<label for="player1">Player 1</label>
-				<input id="player1" type="text" placeholder="GitHub username" autocomplete="off" />
-			</div>
-			<span class="vs-badge">VS</span>
-			<div class="player-input">
-				<label for="player2">Player 2</label>
-				<input id="player2" type="text" placeholder="GitHub username" autocomplete="off" />
-			</div>
-			<button id="battle-btn" class="battle-btn">⚔️ Battle</button>
-		</div>
+			<form id="battle-form" class="battle-form" novalidate>
+				<div class="field">
+					<label for="player1">Player 1</label>
+					<input
+						id="player1"
+						type="text"
+						placeholder="GitHub username"
+						autocomplete="off"
+					/>
+				</div>
+				<div class="field">
+					<label for="player2">Player 2</label>
+					<input
+						id="player2"
+						type="text"
+						placeholder="GitHub username"
+						autocomplete="off"
+					/>
+				</div>
+				<button id="battle-btn" type="submit">Battle</button>
+			</form>
 
-		<div id="error-msg" class="error-msg" role="alert" aria-live="polite"></div>
+			<div id="feedback" class="feedback" role="status" aria-live="polite"></div>
 
-		<div id="results" class="results" aria-live="polite"></div>
+			<section id="results" class="results" aria-live="polite"></section>
+		</main>
 
 		<script>
 			interface ContributionDay {
 				date: string;
 				count: number;
-				color?: string;
 			}
 
 			interface ContributionData {
@@ -209,16 +185,6 @@
 				contributions?: ContributionDay[];
 				weeks?: { days: ContributionDay[] }[];
 				error?: string;
-			}
-
-			const COLORS = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
-
-			function countColor(count: number): string {
-				if (count === 0) return COLORS[0];
-				if (count <= 3) return COLORS[1];
-				if (count <= 6) return COLORS[2];
-				if (count <= 9) return COLORS[3];
-				return COLORS[4];
 			}
 
 			function flattenDays(data: ContributionData): ContributionDay[] {
@@ -229,26 +195,41 @@
 				return [];
 			}
 
-			function renderCard(username: string, data: ContributionData): string {
-				const days = flattenDays(data);
-				const total =
-					data.total ??
-					days.reduce((sum: number, d: ContributionDay) => sum + (d.count ?? 0), 0);
+			function totalFromData(data: ContributionData): number {
+				if (typeof data.total === "number") {
+					return data.total;
+				}
 
-				const squares = days
-					.map((d: ContributionDay) => {
-						const color = d.color ?? countColor(d.count ?? 0);
-						const label = `${d.date ?? ""}: ${d.count ?? 0} contributions`;
-						return `<div class="day" style="background:${color}" title="${label}"></div>`;
-					})
-					.join("");
+				return flattenDays(data).reduce((sum, day) => sum + (day.count ?? 0), 0);
+			}
+
+			function escapeHtml(value: string): string {
+				return value
+					.replaceAll("&", "&amp;")
+					.replaceAll("<", "&lt;")
+					.replaceAll(">", "&gt;")
+					.replaceAll('"', "&quot;")
+					.replaceAll("'", "&#39;");
+			}
+
+			function renderCard(label: string, username: string, data: ContributionData): string {
+				const total = totalFromData(data);
+				const days = flattenDays(data).length;
 
 				return `
-					<div class="player-card">
-						<h2>@${username}</h2>
-						<div class="total">${total.toLocaleString()} contributions</div>
-						<div class="contribution-grid">${squares || '<span class="no-data">No contribution data available.</span>'}</div>
-					</div>`;
+					<article class="card">
+						<h2>${escapeHtml(label)}: @${escapeHtml(username)}</h2>
+						<p>Total contributions: ${total.toLocaleString()}</p>
+						<p>Days in response: ${days.toLocaleString()}</p>
+					</article>`;
+			}
+
+			function winnerText(player1: string, total1: number, player2: string, total2: number): string {
+				if (total1 === total2) {
+					return "Draw";
+				}
+
+				return total1 > total2 ? `${player1} wins` : `${player2} wins`;
 			}
 
 			async function fetchContributions(username: string): Promise<ContributionData> {
@@ -260,47 +241,65 @@
 				return json;
 			}
 
-			async function runBattle() {
-				const p1Input = document.getElementById("player1") as HTMLInputElement;
-				const p2Input = document.getElementById("player2") as HTMLInputElement;
-				const errorEl = document.getElementById("error-msg") as HTMLElement;
-				const resultsEl = document.getElementById("results") as HTMLElement;
-				const btn = document.getElementById("battle-btn") as HTMLButtonElement;
+			const formEl = document.getElementById("battle-form") as HTMLFormElement | null;
+			const player1El = document.getElementById("player1") as HTMLInputElement | null;
+			const player2El = document.getElementById("player2") as HTMLInputElement | null;
+			const feedbackEl = document.getElementById("feedback") as HTMLElement | null;
+			const resultsEl = document.getElementById("results") as HTMLElement | null;
+			const buttonEl = document.getElementById("battle-btn") as HTMLButtonElement | null;
 
-				const u1 = p1Input.value.trim();
-				const u2 = p2Input.value.trim();
+			async function runBattle(event?: SubmitEvent) {
+				event?.preventDefault();
 
-				errorEl.textContent = "";
-				if (!u1 || !u2) {
-					errorEl.textContent = "Please enter both usernames before battling.";
+				if (!player1El || !player2El || !feedbackEl || !resultsEl || !buttonEl) {
 					return;
 				}
 
-				btn.disabled = true;
-				resultsEl.innerHTML = '<div class="loading">Fetching contribution data…</div>';
+				const u1 = player1El.value.trim();
+				const u2 = player2El.value.trim();
+
+				feedbackEl.className = "feedback";
+				feedbackEl.textContent = "";
+				if (!u1 || !u2) {
+					feedbackEl.classList.add("error");
+					feedbackEl.textContent = "Please enter both usernames before battling.";
+					resultsEl.innerHTML = "";
+					return;
+				}
+
+				buttonEl.disabled = true;
+				feedbackEl.classList.add("loading");
+				feedbackEl.textContent = "Fetching contribution data...";
+				resultsEl.innerHTML = "";
 
 				try {
 					const [d1, d2] = await Promise.all([
 						fetchContributions(u1),
 						fetchContributions(u2),
 					]);
-					resultsEl.innerHTML = renderCard(u1, d1) + renderCard(u2, d2);
+
+					const total1 = totalFromData(d1);
+					const total2 = totalFromData(d2);
+
+					resultsEl.innerHTML = `
+						<p class="winner">${escapeHtml(winnerText(u1, total1, u2, total2))}</p>
+						<div class="cards">
+							${renderCard("Player 1", u1, d1)}
+							${renderCard("Player 2", u2, d2)}
+						</div>`;
+					feedbackEl.textContent = "";
+					feedbackEl.className = "feedback";
 				} catch (err) {
-					errorEl.textContent =
+					feedbackEl.className = "feedback error";
+					feedbackEl.textContent =
 						err instanceof Error ? err.message : "Something went wrong.";
 					resultsEl.innerHTML = "";
 				} finally {
-					btn.disabled = false;
+					buttonEl.disabled = false;
 				}
 			}
 
-			document.getElementById("battle-btn")?.addEventListener("click", runBattle);
-
-			["player1", "player2"].forEach((id) => {
-				document.getElementById(id)?.addEventListener("keydown", (e) => {
-					if ((e as KeyboardEvent).key === "Enter") runBattle();
-				});
-			});
+			formEl?.addEventListener("submit", runBattle);
 		</script>
 	</body>
 </html>
