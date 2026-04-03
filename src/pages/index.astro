@@ -8,194 +8,406 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Mona Mayhem – GitHub Contribution Battle Arena</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+		<title>Mona Mayhem - GitHub Contribution Battle Arena</title>
 		<style>
-			*, *::before, *::after { box-sizing: border-box; }
+			:root {
+				--bg-color: #0a0a1a;
+				--neon-green: #5fed83;
+				--neon-purple: #8a2be2;
+				--text-color: #e6edf3;
+				--card-bg: #111122;
+				--border-color: #30363d;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
 
 			body {
 				margin: 0;
-				font-family: system-ui, sans-serif;
-				background: #0d1117;
-				color: #e6edf3;
+				font-family: 'Press Start 2P', cursive, system-ui, sans-serif;
+				background: var(--bg-color);
+				color: var(--text-color);
+				position: relative;
 				min-height: 100vh;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				padding: 2rem 1rem;
+				overflow-x: hidden;
+			}
+
+			body::after {
+				content: "";
+				display: block;
+				position: absolute;
+				top: 0; left: 0; bottom: 0; right: 0;
+				background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+				z-index: 2;
+				background-size: 100% 2px, 3px 100%;
+				pointer-events: none;
+			}
+
+			main {
+				max-width: 860px;
+				margin: 0 auto;
+				padding: 2rem 1rem 3rem;
+				position: relative;
+				z-index: 3;
 			}
 
 			header {
-				text-align: center;
 				margin-bottom: 2rem;
+				text-align: center;
 			}
 
-			header h1 {
-				font-size: 2rem;
-				margin: 0 0 0.25rem;
+			h1 {
+				margin: 0;
+				font-size: 1.8rem;
+				color: #fff;
+				text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--neon-purple), 0 0 40px var(--neon-purple), 0 0 80px var(--neon-purple);
+				animation: pulseNeon 1.5s ease-in-out infinite alternate;
+			}
+
+			@keyframes pulseNeon {
+				from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--neon-purple), 0 0 40px var(--neon-purple), 0 0 80px var(--neon-purple); }
+				to { text-shadow: 0 0 2px #fff, 0 0 5px #fff, 0 0 10px var(--neon-purple), 0 0 20px var(--neon-purple), 0 0 40px var(--neon-purple); }
 			}
 
 			header p {
-				color: #8b949e;
-				margin: 0;
+				margin: 1rem 0 0;
+				color: var(--neon-green);
+				font-size: 0.8rem;
+				line-height: 1.4;
+				text-shadow: 0 0 5px var(--neon-green);
+			}
+
+			@keyframes floatIn {
+				from { opacity: 0; transform: translateY(20px); }
+				to { opacity: 1; transform: translateY(0); }
 			}
 
 			.battle-form {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 1rem;
-				align-items: flex-end;
-				justify-content: center;
-				width: 100%;
-				max-width: 640px;
+				display: grid;
+				gap: 1.5rem;
 				margin-bottom: 1.5rem;
+				animation: floatIn 0.8s ease-out forwards;
 			}
 
-			.player-input {
-				display: flex;
-				flex-direction: column;
-				gap: 0.4rem;
-				flex: 1 1 180px;
+			.field {
+				display: grid;
+				gap: 0.5rem;
 			}
 
-			.player-input label {
-				font-size: 0.85rem;
-				color: #8b949e;
-				font-weight: 600;
+			label {
+				font-size: 0.7rem;
+				color: var(--neon-purple);
 				text-transform: uppercase;
-				letter-spacing: 0.05em;
+				letter-spacing: 1px;
 			}
 
-			.player-input input {
-				padding: 0.55rem 0.75rem;
-				border-radius: 6px;
-				border: 1px solid #30363d;
-				background: #161b22;
-				color: #e6edf3;
-				font-size: 1rem;
+			input {
+				padding: 0.8rem;
+				font-family: 'Press Start 2P', cursive;
+				font-size: 0.8rem;
+				border-radius: 0;
+				border: 2px solid var(--neon-purple);
+				background: #000;
+				color: var(--neon-green);
 				outline: none;
-				transition: border-color 0.15s;
+				transition: box-shadow 0.3s ease, border-color 0.3s ease;
 			}
 
-			.player-input input:focus {
-				border-color: #58a6ff;
+			input:focus, button:focus {
+				outline: 2px solid var(--neon-purple);
+				outline-offset: 2px;
+				border-color: var(--neon-green);
+				box-shadow: 0 0 10px var(--neon-green);
 			}
 
-			.vs-badge {
-				font-size: 1.1rem;
-				font-weight: 700;
-				color: #f78166;
-				padding-bottom: 0.35rem;
-				flex: 0 0 auto;
-			}
-
-			.battle-btn {
-				padding: 0.6rem 1.5rem;
-				border-radius: 6px;
-				border: none;
-				background: #238636;
-				color: #fff;
-				font-size: 1rem;
-				font-weight: 600;
+			button {
+				padding: 0.8rem 1rem;
+				border: 2px solid var(--neon-green);
+				border-radius: 0;
+				font-family: 'Press Start 2P', cursive;
+				font-size: 0.8rem;
+				background: transparent;
+				color: var(--neon-green);
 				cursor: pointer;
-				transition: background 0.15s;
-				flex: 0 0 auto;
+				transition: all 0.3s ease;
+				text-transform: uppercase;
 			}
 
-			.battle-btn:hover:not(:disabled) {
-				background: #2ea043;
+			button:hover:not(:disabled) {
+				background: var(--neon-green);
+				color: #000;
+				box-shadow: 0 0 15px var(--neon-green);
 			}
 
-			.battle-btn:disabled {
-				opacity: 0.6;
+			button:disabled {
+				opacity: 0.5;
 				cursor: not-allowed;
+				border-color: #555;
+				color: #555;
 			}
 
-			.error-msg {
-				color: #f85149;
-				font-size: 0.9rem;
-				margin-bottom: 1rem;
-				min-height: 1.2em;
+			.feedback {
+				min-height: 1.5rem;
+				margin-bottom: 2rem;
+				font-size: 0.7rem;
+				line-height: 1.4;
 				text-align: center;
+			}
+
+			@keyframes shake {
+				0%, 100% { transform: translateX(0); }
+				10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+				20%, 40%, 60%, 80% { transform: translateX(5px); }
+			}
+
+			.feedback.error {
+				color: #ff3366;
+				text-shadow: 0 0 5px #ff3366, 0 0 10px #ff3366, 0 0 20px #ff3366;
+				animation: shake 0.4s ease-in-out;
+			}
+
+			input.error {
+				border-color: #ff3366;
+				box-shadow: 0 0 10px #ff3366;
+				animation: shake 0.4s ease-in-out;
+			}
+
+			.feedback.loading {
+				animation: colorShift 1s infinite alternate;
+			}
+
+			@keyframes colorShift {
+				from { color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); }
+				to { color: var(--neon-purple); text-shadow: 0 0 5px var(--neon-purple); }
 			}
 
 			.results {
-				display: flex;
-				flex-wrap: wrap;
+				display: grid;
+				gap: 2rem;
+			}
+
+			.battle-results {
+				display: grid;
 				gap: 1.5rem;
-				justify-content: center;
-				width: 100%;
-				max-width: 900px;
+				animation: floatIn 0.5s ease-out forwards;
 			}
 
-			.player-card {
-				background: #161b22;
-				border: 1px solid #30363d;
-				border-radius: 8px;
-				padding: 1.25rem;
-				flex: 1 1 300px;
-				min-width: 0;
+			.winner {
+				margin: 0;
+				font-size: 1.5rem;
+				text-align: center;
+				color: #fff;
+				text-transform: uppercase;
+				animation: winnerPulse 1s ease-in-out infinite alternate;
+			}
+			
+			@keyframes winnerPulse {
+				from { 
+					transform: scale(1); 
+					text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #eebb00, 0 0 40px #eebb00; 
+				}
+				to { 
+					transform: scale(1.1); 
+					text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #eebb00, 0 0 60px #eebb00, 0 0 100px #eebb00; 
+				}
 			}
 
-			.player-card h2 {
-				margin: 0 0 0.25rem;
-				font-size: 1.1rem;
+			.cards {
+				display: grid;
+				gap: 2rem;
+				position: relative;
 			}
 
-			.player-card .total {
-				color: #8b949e;
-				font-size: 0.85rem;
-				margin-bottom: 0.75rem;
+			.vs-badge {
+				display: grid;
+				place-items: center;
+				font-size: 1rem;
+				color: #fff;
+				border: 3px solid #fff;
+				border-radius: 50%;
+				height: 4rem;
+				width: 4rem;
+				margin: 0 auto;
+				background: linear-gradient(45deg, var(--neon-purple), var(--neon-green));
+				background-size: 200% 200%;
+				animation: gradientShift 3s ease infinite, pulseNeon 1.5s alternate infinite;
+				box-shadow: 0 0 15px var(--neon-purple);
+				z-index: 10;
+			}
+
+			@keyframes gradientShift {
+				0% { background-position: 0% 50%; }
+				50% { background-position: 100% 50%; }
+				100% { background-position: 0% 50%; }
+			}
+
+			.card {
+				position: relative;
+				border: 2px solid var(--neon-purple);
+				background: var(--card-bg);
+				padding: 1.5rem;
+				overflow: hidden;
+				box-shadow: inset 0 0 20px rgba(138, 43, 226, 0.2);
+			}
+
+			.card::after {
+				content: "";
+				position: absolute;
+				top: 0;
+				left: -100%;
+				width: 50%;
+				height: 100%;
+				background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%);
+				transform: skewX(-20deg);
+				animation: shimmer 4s infinite;
+				pointer-events: none;
+			}
+
+			@keyframes shimmer {
+				0% { left: -100%; }
+				20% { left: 200%; }
+				100% { left: 200%; }
+			}
+
+			.card h2 {
+				margin: 0 0 1rem;
+				font-size: 0.8rem;
+				color: var(--neon-green);
+				line-height: 1.4;
+			}
+
+			.card p {
+				margin: 0.5rem 0;
+				font-size: 0.6rem;
+				color: #ccc;
+				line-height: 1.4;
+			}
+
+			.meta {
+				font-size: 0.6rem;
 			}
 
 			.contribution-grid {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2px;
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(12px, 1fr));
+				gap: 4px;
+				margin-top: 1.5rem;
 			}
 
-			.contribution-grid .day {
-				width: 10px;
-				height: 10px;
-				border-radius: 2px;
-				background: #161b22;
-				border: 1px solid #21262d;
+			.day {
+				width: 100%;
+				aspect-ratio: 1 / 1;
+				border: 1px solid var(--bg-color);
+				transition: transform 0.2s, box-shadow 0.2s;
 			}
 
-			.loading {
-				color: #8b949e;
-				font-size: 0.9rem;
-				padding: 1rem 0;
-				text-align: center;
+			.day:hover {
+				transform: scale(1.2);
+				box-shadow: 0 0 10px currentColor; /* Glow effect dynamically matching inline style */
+				position: relative;
+				z-index: 5;
 			}
 
-			.no-data {
-				color: #8b949e;
-				font-size: 0.85rem;
+			@media (max-width: 767px) {
+				h1 {
+					font-size: 1.2rem;
+				}
+
+				header p {
+					font-size: 0.6rem;
+				}
+
+				input, button {
+					font-size: 0.7rem;
+					padding: 0.6rem;
+				}
+
+				.battle-form {
+					grid-template-columns: 1fr;
+					gap: 1rem;
+				}
+
+				.card {
+					padding: 1rem;
+				}
+
+				.card h2 {
+					font-size: 0.7rem;
+				}
+
+				.vs-badge {
+					height: 3rem;
+					width: 3rem;
+					font-size: 0.8rem;
+				}
+			}
+
+			@media (min-width: 768px) {
+				.battle-form {
+					grid-template-columns: 1fr 1fr auto;
+					align-items: end;
+				}
+			}
+
+			@media (min-width: 1024px) {
+				.cards {
+					grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+					align-items: center;
+				}
+
+				.vs-badge {
+					margin-top: 0;
+				}
 			}
 		</style>
 	</head>
 	<body>
-		<header>
-			<h1>⚔️ Mona Mayhem</h1>
-			<p>GitHub Contribution Battle Arena</p>
-		</header>
+		<main>
+			<header>
+				<h1>Mona Mayhem</h1>
+				<p>GitHub Contribution Battle Arena</p>
+			</header>
 
-		<div class="battle-form">
-			<div class="player-input">
-				<label for="player1">Player 1</label>
-				<input id="player1" type="text" placeholder="GitHub username" autocomplete="off" />
-			</div>
-			<span class="vs-badge">VS</span>
-			<div class="player-input">
-				<label for="player2">Player 2</label>
-				<input id="player2" type="text" placeholder="GitHub username" autocomplete="off" />
-			</div>
-			<button id="battle-btn" class="battle-btn">⚔️ Battle</button>
-		</div>
+			<form id="battle-form" class="battle-form" novalidate>
+				<div class="field">
+					<label for="player1">Player 1</label>
+					<input
+						id="player1"
+						type="text"
+						placeholder="GitHub username"
+						autocomplete="off"
+						tabindex="1"
+					/>
+				</div>
+				<div class="field">
+					<label for="player2">Player 2</label>
+					<input
+						id="player2"
+						type="text"
+						placeholder="GitHub username"
+						autocomplete="off"
+						tabindex="2"
+					/>
+				</div>
+				<button id="battle-btn" type="submit" tabindex="3">Battle</button>
+			</form>
 
-		<div id="error-msg" class="error-msg" role="alert" aria-live="polite"></div>
+			<div id="feedback" class="feedback" role="status" aria-live="polite"></div>
 
-		<div id="results" class="results" aria-live="polite"></div>
+			<section id="results" class="results" aria-live="polite"></section>
+
+			<section id="recent-battles" class="recent-battles" aria-live="polite" style="display: none; margin-top: 3rem;">
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+					<h2 style="margin: 0; font-size: 1rem; color: var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple);">Recent Battles</h2>
+					<button id="clear-history-btn" style="font-size: 0.6rem; padding: 0.5rem; border-color: #ff3366; color: #ff3366;">Clear History</button>
+				</div>
+				<div id="history-list" style="display: grid; gap: 1rem;"></div>
+			</section>
+		</main>
 
 		<script>
 			interface ContributionDay {
@@ -204,51 +416,209 @@
 				color?: string;
 			}
 
+			interface ContributionDayV2 {
+				weekday: number;
+				count: number;
+				level?: number;
+			}
+
+			interface ContributionWeekV2 {
+				first_day: string;
+				contribution_days: ContributionDayV2[];
+			}
+
+			interface BattleHistoryEntry {
+				player1: string;
+				player2: string;
+				total1: number;
+				total2: number;
+				winner: string;
+				timestamp: string;
+			}
+
 			interface ContributionData {
 				total?: number;
+				total_contributions?: number;
+				from?: string;
+				to?: string;
+				colors_full?: string[];
 				contributions?: ContributionDay[];
-				weeks?: { days: ContributionDay[] }[];
+				weeks?: LegacyContributionWeek[] | ContributionWeekV2[];
 				error?: string;
 			}
 
-			const COLORS = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
-
-			function countColor(count: number): string {
-				if (count === 0) return COLORS[0];
-				if (count <= 3) return COLORS[1];
-				if (count <= 6) return COLORS[2];
-				if (count <= 9) return COLORS[3];
-				return COLORS[4];
+			interface LegacyContributionWeek {
+				days: ContributionDay[];
 			}
 
 			function flattenDays(data: ContributionData): ContributionDay[] {
 				if (Array.isArray(data.contributions)) return data.contributions;
 				if (Array.isArray(data.weeks)) {
-					return data.weeks.flatMap((w) => w.days ?? []);
+					const firstWeek = data.weeks[0];
+					if (firstWeek && "contribution_days" in firstWeek) {
+						const palette = Array.isArray(data.colors_full) ? data.colors_full : undefined;
+						return (data.weeks as ContributionWeekV2[]).flatMap((week) => {
+							const baseDate = new Date(week.first_day);
+							if (Number.isNaN(baseDate.getTime())) {
+								return [];
+							}
+
+							return week.contribution_days.map((day) => {
+								const date = new Date(baseDate);
+								date.setDate(date.getDate() + day.weekday);
+								const isoDate = date.toISOString().slice(0, 10);
+								const level = day.level ?? 0;
+								const color = palette?.[level];
+
+								return {
+									date: isoDate,
+									count: day.count ?? 0,
+									color,
+								};
+							});
+						});
+					}
+
+					return (data.weeks as LegacyContributionWeek[]).flatMap((week) => week.days ?? []);
 				}
 				return [];
 			}
 
-			function renderCard(username: string, data: ContributionData): string {
-				const days = flattenDays(data);
-				const total =
-					data.total ??
-					days.reduce((sum: number, d: ContributionDay) => sum + (d.count ?? 0), 0);
+			function totalFromData(data: ContributionData): number {
+				if (typeof data.total_contributions === "number") {
+					return data.total_contributions;
+				}
+
+				if (typeof data.total === "number") {
+					return data.total;
+				}
+
+				return flattenDays(data).reduce((sum, day) => sum + (day.count ?? 0), 0);
+			}
+
+			const GITHUB_COLORS = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
+
+			function colorFromCount(count: number): string {
+				if (count <= 0) return GITHUB_COLORS[0];
+				if (count <= 3) return GITHUB_COLORS[1];
+				if (count <= 6) return GITHUB_COLORS[2];
+				if (count <= 9) return GITHUB_COLORS[3];
+				return GITHUB_COLORS[4];
+			}
+
+			function isHexColor(value: string | undefined): value is string {
+				if (!value) return false;
+				return /^#[0-9a-f]{6}$/i.test(value);
+			}
+
+			function formatDate(value: string): string {
+				const parsed = new Date(value);
+				if (Number.isNaN(parsed.getTime())) {
+					return value;
+				}
+
+				return parsed.toLocaleDateString(undefined, {
+					year: "numeric",
+					month: "short",
+					day: "numeric",
+				});
+			}
+
+			function dateRangeFromDays(days: ContributionDay[]): string {
+				if (days.length > 0) {
+					const sorted = [...days].sort((a, b) =>
+						a.date.localeCompare(b.date),
+					);
+					return `${formatDate(sorted[0].date)} - ${formatDate(sorted[sorted.length - 1].date)}`;
+				}
+
+				return "No contribution days returned";
+			}
+
+			function explicitRange(data: ContributionData): string | null {
+				if (data.from && data.to) {
+					return `${formatDate(data.from)} - ${formatDate(data.to)}`;
+				}
+
+				return null;
+			}
+
+			function rangeFromData(data: ContributionData, days: ContributionDay[]): string {
+				const explicit = explicitRange(data);
+				if (explicit) {
+					return explicit;
+				}
+
+				return dateRangeFromDays(days);
+			}
+
+			function renderContributionGrid(days: ContributionDay[]): string {
+				if (days.length === 0) {
+					return "<p class=\"meta\">No contribution data available.</p>";
+				}
 
 				const squares = days
-					.map((d: ContributionDay) => {
-						const color = d.color ?? countColor(d.count ?? 0);
-						const label = `${d.date ?? ""}: ${d.count ?? 0} contributions`;
-						return `<div class="day" style="background:${color}" title="${label}"></div>`;
+					.map((day) => {
+						const color = isHexColor(day.color) ? day.color : colorFromCount(day.count ?? 0);
+						const label = `${formatDate(day.date)}: ${day.count ?? 0} contributions`;
+						return `<div class=\"day\" style=\"background:${color}\" title=\"${escapeHtml(label)}\" aria-label=\"${escapeHtml(label)}\"></div>`;
 					})
 					.join("");
 
+				return `<div class=\"contribution-grid\">${squares}</div>`;
+			}
+
+			function escapeHtml(value: string): string {
+				return value
+					.replaceAll("&", "&amp;")
+					.replaceAll("<", "&lt;")
+					.replaceAll(">", "&gt;")
+					.replaceAll('"', "&quot;")
+					.replaceAll("'", "&#39;");
+			}
+
+			function calculateLongestStreak(days: ContributionDay[]): number {
+				if (!days || days.length === 0) return 0;
+				const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
+				
+				let maxStreak = 0;
+				let currentStreak = 0;
+				
+				for (const day of sortedDays) {
+					if ((day.count ?? 0) > 0) {
+						currentStreak++;
+						if (currentStreak > maxStreak) {
+							maxStreak = currentStreak;
+						}
+					} else {
+						currentStreak = 0;
+					}
+				}
+				return maxStreak;
+			}
+
+			function renderCard(label: string, username: string, data: ContributionData): string {
+				const total = totalFromData(data);
+				const days = flattenDays(data);
+				const range = rangeFromData(data, days);
+				const longestStreak = calculateLongestStreak(days);
+
 				return `
-					<div class="player-card">
-						<h2>@${username}</h2>
-						<div class="total">${total.toLocaleString()} contributions</div>
-						<div class="contribution-grid">${squares || '<span class="no-data">No contribution data available.</span>'}</div>
-					</div>`;
+					<article class="card">
+						<h2>${escapeHtml(label)}: @${escapeHtml(username)}</h2>
+						<p class="meta">Total contributions: ${total.toLocaleString()}</p>
+						<p class="meta">Date range: ${escapeHtml(range)}</p>
+						${renderContributionGrid(days)}
+						<p class="meta streak" style="margin-top: 1rem; color: #ffab00; text-shadow: 0 0 5px #ffab00;">🔥 Longest Streak: ${longestStreak} days</p>
+					</article>`;
+			}
+
+			function winnerText(player1: string, total1: number, player2: string, total2: number): string {
+				if (total1 === total2) {
+					return "🤝 IT'S A TIE! 🤝";
+				}
+
+				return total1 > total2 ? `🏆 ${player1} WINS! 🏆` : `🏆 ${player2} WINS! 🏆`;
 			}
 
 			async function fetchContributions(username: string): Promise<ContributionData> {
@@ -260,47 +630,185 @@
 				return json;
 			}
 
-			async function runBattle() {
-				const p1Input = document.getElementById("player1") as HTMLInputElement;
-				const p2Input = document.getElementById("player2") as HTMLInputElement;
-				const errorEl = document.getElementById("error-msg") as HTMLElement;
-				const resultsEl = document.getElementById("results") as HTMLElement;
-				const btn = document.getElementById("battle-btn") as HTMLButtonElement;
+			const formEl = document.getElementById("battle-form") as HTMLFormElement | null;
+			const player1El = document.getElementById("player1") as HTMLInputElement | null;
+			const player2El = document.getElementById("player2") as HTMLInputElement | null;
+			const feedbackEl = document.getElementById("feedback") as HTMLElement | null;
+			const resultsEl = document.getElementById("results") as HTMLElement | null;
+			const buttonEl = document.getElementById("battle-btn") as HTMLButtonElement | null;
+			const recentBattlesEl = document.getElementById("recent-battles") as HTMLElement | null;
+			const historyListEl = document.getElementById("history-list") as HTMLElement | null;
+			const clearHistoryBtn = document.getElementById("clear-history-btn") as HTMLButtonElement | null;
 
-				const u1 = p1Input.value.trim();
-				const u2 = p2Input.value.trim();
+			const usernameRegex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
 
-				errorEl.textContent = "";
-				if (!u1 || !u2) {
-					errorEl.textContent = "Please enter both usernames before battling.";
+			function validateUsername(username: string): string | null {
+				if (!username) return "Please enter both usernames before battling.";
+				if (!usernameRegex.test(username)) return `Invalid GitHub username format: @${username}`;
+				return null;
+			}
+
+			function loadHistory() {
+				if (!recentBattlesEl || !historyListEl) return;
+				const historyStr = localStorage.getItem("mona-mayhem-history");
+				if (!historyStr) {
+					recentBattlesEl.style.display = "none";
 					return;
 				}
 
-				btn.disabled = true;
-				resultsEl.innerHTML = '<div class="loading">Fetching contribution data…</div>';
+				try {
+					const history: BattleHistoryEntry[] = JSON.parse(historyStr);
+					if (!Array.isArray(history) || history.length === 0) {
+						recentBattlesEl.style.display = "none";
+						return;
+					}
+
+					historyListEl.innerHTML = history.map(entry => `
+						<div class="card" style="padding: 1rem; border-color: var(--border-color); background: #0c0c16; font-size: 0.6rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+							<div style="flex: 1; min-width: 150px;">
+								<span style="color: var(--neon-green)">@${escapeHtml(entry.player1)}</span> (${entry.total1.toLocaleString()}) 
+								<span style="color: var(--neon-purple); margin: 0 0.5rem;">VS</span> 
+								<span style="color: var(--neon-green)">@${escapeHtml(entry.player2)}</span> (${entry.total2.toLocaleString()})
+							</div>
+							<div style="flex: 1; text-align: center; color: #eebb00; min-width: 100px;">
+								Result: ${escapeHtml(entry.winner)}
+							</div>
+							<div style="color: #666; text-align: right; min-width: 120px;">
+								${escapeHtml(entry.timestamp)}
+							</div>
+						</div>
+					`).join("");
+					recentBattlesEl.style.display = "block";
+				} catch (e) {
+					console.error("Failed to load history", e);
+					localStorage.removeItem("mona-mayhem-history");
+					recentBattlesEl.style.display = "none";
+				}
+			}
+
+			function saveToHistory(player1: string, player2: string, total1: number, total2: number, winner: string) {
+				const historyStr = localStorage.getItem("mona-mayhem-history");
+				let history: BattleHistoryEntry[] = [];
+				if (historyStr) {
+					try {
+						history = JSON.parse(historyStr);
+					} catch (e) {
+						history = [];
+					}
+				}
+
+				const now = new Date().toLocaleString(undefined, { 
+					year: 'numeric', month: 'short', day: 'numeric', 
+					hour: 'numeric', minute: '2-digit' 
+				});
+
+				const rawWinner = total1 === total2 ? "Tie" : (total1 > total2 ? player1 : player2);
+
+				history.unshift({
+					player1, player2, total1, total2, winner: rawWinner, timestamp: now
+				});
+
+				if (history.length > 10) {
+					history = history.slice(0, 10);
+				}
+
+				localStorage.setItem("mona-mayhem-history", JSON.stringify(history));
+				loadHistory();
+			}
+
+			clearHistoryBtn?.addEventListener("click", () => {
+				localStorage.removeItem("mona-mayhem-history");
+				loadHistory();
+			});
+
+			// Load history on mount
+			loadHistory();
+
+			async function runBattle(event?: SubmitEvent) {
+				event?.preventDefault();
+
+				if (!player1El || !player2El || !feedbackEl || !resultsEl || !buttonEl) {
+					return;
+				}
+
+				const u1 = player1El.value.trim();
+				const u2 = player2El.value.trim();
+
+				// Reset state
+				feedbackEl.className = "feedback";
+				feedbackEl.textContent = "";
+				player1El.classList.remove("error");
+				player2El.classList.remove("error");
+				resultsEl.innerHTML = "";
+
+				const err1 = validateUsername(u1);
+				const err2 = validateUsername(u2);
+
+				if (err1 || err2) {
+					feedbackEl.classList.add("error");
+					// Remove class and use a timeout to re-trigger the animation if needed
+					feedbackEl.style.animation = 'none';
+					feedbackEl.offsetHeight; // trigger reflow
+					feedbackEl.style.animation = '';
+
+					if (err1) player1El.classList.add("error");
+					if (err2) player2El.classList.add("error");
+					
+					feedbackEl.textContent = err1 && err2 
+						? "Please enter valid GitHub usernames for both players."
+						: (err1 || err2);
+					return;
+				}
+
+				buttonEl.disabled = true;
+				feedbackEl.classList.add("loading");
+				feedbackEl.textContent = "Fetching contribution data...";
+				resultsEl.innerHTML = "";
 
 				try {
 					const [d1, d2] = await Promise.all([
 						fetchContributions(u1),
 						fetchContributions(u2),
 					]);
-					resultsEl.innerHTML = renderCard(u1, d1) + renderCard(u2, d2);
+
+					const total1 = totalFromData(d1);
+					const total2 = totalFromData(d2);
+
+					resultsEl.innerHTML = `
+						<div class="battle-results">
+							<p class="winner">${escapeHtml(winnerText(u1, total1, u2, total2))}</p>
+							<div class="cards">
+								${renderCard("Player 1", u1, d1)}
+								<div class="vs-badge" aria-label="Versus">VS</div>
+								${renderCard("Player 2", u2, d2)}
+							</div>
+						</div>`;
+					feedbackEl.textContent = "";
+					feedbackEl.className = "feedback";
+					
+					// Save result to localStorage
+					saveToHistory(u1, u2, total1, total2, winnerText(u1, total1, u2, total2));
 				} catch (err) {
-					errorEl.textContent =
+					feedbackEl.className = "feedback error";
+					feedbackEl.textContent =
 						err instanceof Error ? err.message : "Something went wrong.";
 					resultsEl.innerHTML = "";
 				} finally {
-					btn.disabled = false;
+					buttonEl.disabled = false;
 				}
 			}
 
-			document.getElementById("battle-btn")?.addEventListener("click", runBattle);
-
-			["player1", "player2"].forEach((id) => {
-				document.getElementById(id)?.addEventListener("keydown", (e) => {
-					if ((e as KeyboardEvent).key === "Enter") runBattle();
-				});
+			formEl?.addEventListener("submit", runBattle);
+			formEl?.addEventListener("keydown", (e: KeyboardEvent) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					runBattle();
+				}
 			});
+			
+			// Remove error styling on input
+			player1El?.addEventListener("input", () => player1El.classList.remove("error"));
+			player2El?.addEventListener("input", () => player2El.classList.remove("error"));
 		</script>
 	</body>
 </html>
