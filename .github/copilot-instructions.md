@@ -33,6 +33,18 @@
 - Return JSON from API routes with explicit status codes and content type headers.
 - Respect strict TypeScript settings and avoid `any` unless there is no practical typed alternative.
 
+## Design Guide (Retro Arcade Theme)
+
+- **Colors**:
+  - Background: Dark (`#0a0a1a`)
+  - Primary Accent (Neon Green): `#5fed83`
+  - Secondary Accent (Neon Purple): `#8a2be2`
+- **Typography**: Complete 8-bit aesthetic utilizing `"Press Start 2P"` from Google Fonts.
+- **Animation Style**:
+  - **Scanlines**: Global CRT scanline effects applying an overlay on main containers.
+  - **Neon Glows**: Heavy `text-shadow` and `box-shadow` styles to mimic pulsating neon signs for headings and interactions.
+  - **Motion**: Inputs and results feature "float-in" entry animations; cards incorporate traversing "shimmer/shine" absolute pseudo-elements.
+
 ## Useful References
 
 - Project setup and context: `README.md`
