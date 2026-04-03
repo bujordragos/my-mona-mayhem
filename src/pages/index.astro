@@ -222,22 +222,70 @@
 				color?: string;
 			}
 
+			interface ContributionDayV2 {
+				weekday: number;
+				count: number;
+				level?: number;
+			}
+
+			interface ContributionWeekV2 {
+				first_day: string;
+				contribution_days: ContributionDayV2[];
+			}
+
 			interface ContributionData {
 				total?: number;
+				total_contributions?: number;
+				from?: string;
+				to?: string;
+				colors_full?: string[];
 				contributions?: ContributionDay[];
-				weeks?: { days: ContributionDay[] }[];
+				weeks?: LegacyContributionWeek[] | ContributionWeekV2[];
 				error?: string;
+			}
+
+			interface LegacyContributionWeek {
+				days: ContributionDay[];
 			}
 
 			function flattenDays(data: ContributionData): ContributionDay[] {
 				if (Array.isArray(data.contributions)) return data.contributions;
 				if (Array.isArray(data.weeks)) {
-					return data.weeks.flatMap((w) => w.days ?? []);
+					const firstWeek = data.weeks[0];
+					if (firstWeek && "contribution_days" in firstWeek) {
+						const palette = Array.isArray(data.colors_full) ? data.colors_full : undefined;
+						return (data.weeks as ContributionWeekV2[]).flatMap((week) => {
+							const baseDate = new Date(week.first_day);
+							if (Number.isNaN(baseDate.getTime())) {
+								return [];
+							}
+
+							return week.contribution_days.map((day) => {
+								const date = new Date(baseDate);
+								date.setDate(date.getDate() + day.weekday);
+								const isoDate = date.toISOString().slice(0, 10);
+								const level = day.level ?? 0;
+								const color = palette?.[level];
+
+								return {
+									date: isoDate,
+									count: day.count ?? 0,
+									color,
+								};
+							});
+						});
+					}
+
+					return (data.weeks as LegacyContributionWeek[]).flatMap((week) => week.days ?? []);
 				}
 				return [];
 			}
 
 			function totalFromData(data: ContributionData): number {
+				if (typeof data.total_contributions === "number") {
+					return data.total_contributions;
+				}
+
 				if (typeof data.total === "number") {
 					return data.total;
 				}
@@ -274,14 +322,31 @@
 			}
 
 			function dateRangeFromDays(days: ContributionDay[]): string {
-				if (days.length === 0) {
-					return "No contribution days returned";
+				if (days.length > 0) {
+					const sorted = [...days].sort((a, b) =>
+						a.date.localeCompare(b.date),
+					);
+					return `${formatDate(sorted[0].date)} - ${formatDate(sorted[sorted.length - 1].date)}`;
 				}
 
-				const sorted = [...days].sort((a, b) =>
-					a.date.localeCompare(b.date),
-				);
-				return `${formatDate(sorted[0].date)} - ${formatDate(sorted[sorted.length - 1].date)}`;
+				return "No contribution days returned";
+			}
+
+			function explicitRange(data: ContributionData): string | null {
+				if (data.from && data.to) {
+					return `${formatDate(data.from)} - ${formatDate(data.to)}`;
+				}
+
+				return null;
+			}
+
+			function rangeFromData(data: ContributionData, days: ContributionDay[]): string {
+				const explicit = explicitRange(data);
+				if (explicit) {
+					return explicit;
+				}
+
+				return dateRangeFromDays(days);
 			}
 
 			function renderContributionGrid(days: ContributionDay[]): string {
@@ -312,7 +377,7 @@
 			function renderCard(label: string, username: string, data: ContributionData): string {
 				const total = totalFromData(data);
 				const days = flattenDays(data);
-				const range = dateRangeFromDays(days);
+				const range = rangeFromData(data, days);
 
 				return `
 					<article class="card">
