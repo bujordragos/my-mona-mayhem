@@ -117,7 +117,9 @@
 				transition: box-shadow 0.3s ease, border-color 0.3s ease;
 			}
 
-			input:focus {
+			input:focus, button:focus {
+				outline: 2px solid var(--neon-purple);
+				outline-offset: 2px;
 				border-color: var(--neon-green);
 				box-shadow: 0 0 10px var(--neon-green);
 			}
@@ -156,9 +158,22 @@
 				text-align: center;
 			}
 
+			@keyframes shake {
+				0%, 100% { transform: translateX(0); }
+				10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+				20%, 40%, 60%, 80% { transform: translateX(5px); }
+			}
+
 			.feedback.error {
-				color: #ff003c;
-				text-shadow: 0 0 5px #ff003c;
+				color: #ff3366;
+				text-shadow: 0 0 5px #ff3366, 0 0 10px #ff3366, 0 0 20px #ff3366;
+				animation: shake 0.4s ease-in-out;
+			}
+
+			input.error {
+				border-color: #ff3366;
+				box-shadow: 0 0 10px #ff3366;
+				animation: shake 0.4s ease-in-out;
 			}
 
 			.feedback.loading {
@@ -285,12 +300,48 @@
 				z-index: 5;
 			}
 
-			@media (min-width: 700px) {
+			@media (max-width: 767px) {
+				h1 {
+					font-size: 1.2rem;
+				}
+
+				header p {
+					font-size: 0.6rem;
+				}
+
+				input, button {
+					font-size: 0.7rem;
+					padding: 0.6rem;
+				}
+
+				.battle-form {
+					grid-template-columns: 1fr;
+					gap: 1rem;
+				}
+
+				.card {
+					padding: 1rem;
+				}
+
+				.card h2 {
+					font-size: 0.7rem;
+				}
+
+				.vs-badge {
+					height: 3rem;
+					width: 3rem;
+					font-size: 0.8rem;
+				}
+			}
+
+			@media (min-width: 768px) {
 				.battle-form {
 					grid-template-columns: 1fr 1fr auto;
 					align-items: end;
 				}
+			}
 
+			@media (min-width: 1024px) {
 				.cards {
 					grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 					align-items: center;
@@ -317,6 +368,7 @@
 						type="text"
 						placeholder="GitHub username"
 						autocomplete="off"
+						tabindex="1"
 					/>
 				</div>
 				<div class="field">
@@ -326,9 +378,10 @@
 						type="text"
 						placeholder="GitHub username"
 						autocomplete="off"
+						tabindex="2"
 					/>
 				</div>
-				<button id="battle-btn" type="submit">Battle</button>
+				<button id="battle-btn" type="submit" tabindex="3">Battle</button>
 			</form>
 
 			<div id="feedback" class="feedback" role="status" aria-live="polite"></div>
@@ -533,6 +586,14 @@
 			const resultsEl = document.getElementById("results") as HTMLElement | null;
 			const buttonEl = document.getElementById("battle-btn") as HTMLButtonElement | null;
 
+			const usernameRegex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
+
+			function validateUsername(username: string): string | null {
+				if (!username) return "Please enter both usernames before battling.";
+				if (!usernameRegex.test(username)) return `Invalid GitHub username format: @${username}`;
+				return null;
+			}
+
 			async function runBattle(event?: SubmitEvent) {
 				event?.preventDefault();
 
@@ -543,12 +604,29 @@
 				const u1 = player1El.value.trim();
 				const u2 = player2El.value.trim();
 
+				// Reset state
 				feedbackEl.className = "feedback";
 				feedbackEl.textContent = "";
-				if (!u1 || !u2) {
+				player1El.classList.remove("error");
+				player2El.classList.remove("error");
+				resultsEl.innerHTML = "";
+
+				const err1 = validateUsername(u1);
+				const err2 = validateUsername(u2);
+
+				if (err1 || err2) {
 					feedbackEl.classList.add("error");
-					feedbackEl.textContent = "Please enter both usernames before battling.";
-					resultsEl.innerHTML = "";
+					// Remove class and use a timeout to re-trigger the animation if needed
+					feedbackEl.style.animation = 'none';
+					feedbackEl.offsetHeight; // trigger reflow
+					feedbackEl.style.animation = '';
+
+					if (err1) player1El.classList.add("error");
+					if (err2) player2El.classList.add("error");
+					
+					feedbackEl.textContent = err1 && err2 
+						? "Please enter valid GitHub usernames for both players."
+						: (err1 || err2);
 					return;
 				}
 
@@ -588,6 +666,16 @@
 			}
 
 			formEl?.addEventListener("submit", runBattle);
+			formEl?.addEventListener("keydown", (e: KeyboardEvent) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					runBattle();
+				}
+			});
+			
+			// Remove error styling on input
+			player1El?.addEventListener("input", () => player1El.classList.remove("error"));
+			player2El?.addEventListener("input", () => player2El.classList.remove("error"));
 		</script>
 	</body>
 </html>
