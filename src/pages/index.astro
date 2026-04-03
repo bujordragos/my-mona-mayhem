@@ -245,6 +245,53 @@
 				100% { background-position: 0% 50%; }
 			}
 
+			.countdown-overlay {
+				position: fixed;
+				top: 0; left: 0; right: 0; bottom: 0;
+				background: rgba(10, 10, 26, 0.9);
+				z-index: 1000;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 0.3s;
+			}
+
+			.countdown-overlay.active {
+				opacity: 1;
+				pointer-events: all;
+			}
+
+			.countdown-text {
+				font-size: 4rem;
+				color: var(--neon-green);
+				text-shadow: 0 0 20px var(--neon-green);
+				transform: scale(0.5);
+				opacity: 0;
+				text-align: center;
+			}
+
+			.countdown-text.animate {
+				animation: countdownPop 1s ease-in-out forwards;
+			}
+
+			@keyframes countdownPop {
+				0% { transform: scale(0.5); opacity: 0; }
+				20% { transform: scale(1.2); opacity: 1; }
+				80% { transform: scale(1); opacity: 1; }
+				100% { transform: scale(0.8); opacity: 0; }
+			}
+
+			.results.slide-in {
+				animation: slideUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+			}
+
+			@keyframes slideUp {
+				from { transform: translateY(100px); opacity: 0; }
+				to { transform: translateY(0); opacity: 1; }
+			}
+
 			.card {
 				position: relative;
 				border: 2px solid var(--neon-purple);
@@ -363,9 +410,31 @@
 					margin-top: 0;
 				}
 			}
+
+			.mute-toggle {
+				position: absolute;
+				top: 1rem;
+				right: 1rem;
+				background: transparent;
+				border: 2px solid var(--neon-purple);
+				color: var(--neon-purple);
+				font-size: 1.2rem;
+				cursor: pointer;
+				padding: 0.5rem;
+				border-radius: 5px;
+				transition: all 0.3s ease;
+				z-index: 100;
+				line-height: 1;
+			}
+			.mute-toggle:hover {
+				background: var(--neon-purple);
+				color: #000;
+				box-shadow: 0 0 10px var(--neon-purple);
+			}
 		</style>
 	</head>
 	<body>
+		<button id="mute-btn" class="mute-toggle" aria-label="Toggle Sound" aria-pressed="false">🔊</button>
 		<main>
 			<header>
 				<h1>Mona Mayhem</h1>
@@ -407,9 +476,113 @@
 				</div>
 				<div id="history-list" style="display: grid; gap: 1rem;"></div>
 			</section>
+
+			<div id="countdown-overlay" class="countdown-overlay">
+				<div id="countdown-text" class="countdown-text"></div>
+			</div>
 		</main>
 
 		<script>
+			let audioCtx: AudioContext | null = null;
+			let isMuted = false;
+
+			function initAudio() {
+				if (!audioCtx) {
+					audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+				}
+				if (audioCtx.state === 'suspended') {
+					audioCtx.resume();
+				}
+			}
+
+			function playTone(freq: number, type: OscillatorType, duration: number, startOffset: number) {
+				if (isMuted || !audioCtx) return;
+				const osc = audioCtx.createOscillator();
+				const gain = audioCtx.createGain();
+				const t = audioCtx.currentTime + startOffset;
+
+				osc.type = type;
+				osc.frequency.setValueAtTime(freq, t);
+				
+				osc.connect(gain);
+				gain.connect(audioCtx.destination);
+				
+				gain.gain.setValueAtTime(0.1, t);
+				gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+				
+				osc.start(t);
+				osc.stop(t + duration);
+			}
+
+			function playCoin() {
+				initAudio();
+				if (isMuted || !audioCtx) return;
+				playTone(988, 'square', 0.1, 0); // B5
+				playTone(1319, 'square', 0.3, 0.1); // E6
+			}
+
+			function playPowerUp() {
+				initAudio();
+				if (isMuted || !audioCtx) return;
+				const osc = audioCtx.createOscillator();
+				const gain = audioCtx.createGain();
+				const t = audioCtx.currentTime;
+				
+				osc.type = 'square';
+				osc.frequency.setValueAtTime(440, t);
+				osc.frequency.exponentialRampToValueAtTime(880, t + 0.1);
+				osc.frequency.exponentialRampToValueAtTime(1760, t + 0.2);
+				osc.frequency.exponentialRampToValueAtTime(3520, t + 0.3);
+				
+				osc.connect(gain);
+				gain.connect(audioCtx.destination);
+				
+				gain.gain.setValueAtTime(0.1, t);
+				gain.gain.linearRampToValueAtTime(0.001, t + 0.4);
+				
+				osc.start(t);
+				osc.stop(t + 0.4);
+			}
+
+			function playExplosion() {
+				initAudio();
+				if (isMuted || !audioCtx) return;
+				const t = audioCtx.currentTime;
+				const duration = 0.5;
+				const bufferSize = audioCtx.sampleRate * duration;
+				const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+				const data = buffer.getChannelData(0);
+				for (let i = 0; i < bufferSize; i++) {
+					data[i] = Math.random() * 2 - 1;
+				}
+				
+				const noise = audioCtx.createBufferSource();
+				noise.buffer = buffer;
+				const gain = audioCtx.createGain();
+				
+				const filter = audioCtx.createBiquadFilter();
+				filter.type = 'lowpass';
+				filter.frequency.setValueAtTime(1000, t);
+				filter.frequency.linearRampToValueAtTime(100, t + duration);
+				
+				noise.connect(filter);
+				filter.connect(gain);
+				gain.connect(audioCtx.destination);
+				
+				gain.gain.setValueAtTime(0.2, t);
+				gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+				
+				noise.start(t);
+			}
+
+			const muteBtn = document.getElementById("mute-btn") as HTMLButtonElement | null;
+			muteBtn?.addEventListener("click", () => {
+				isMuted = !isMuted;
+				muteBtn.textContent = isMuted ? "🔇" : "🔊";
+				muteBtn.setAttribute("aria-pressed", isMuted.toString());
+				if (!isMuted) initAudio();
+			});
+
 			interface ContributionDay {
 				date: string;
 				count: number;
@@ -602,6 +775,9 @@
 				const days = flattenDays(data);
 				const range = rangeFromData(data, days);
 				const longestStreak = calculateLongestStreak(days);
+				const palette = Array.isArray(data.colors_full) && data.colors_full.length > 0 ? data.colors_full : GITHUB_COLORS;
+				
+				const legendSquares = palette.map(color => `<div style="width: 12px; height: 12px; background: ${escapeHtml(color)}; border: 1px solid var(--bg-color)"></div>`).join('');
 
 				return `
 					<article class="card">
@@ -609,6 +785,11 @@
 						<p class="meta">Total contributions: ${total.toLocaleString()}</p>
 						<p class="meta">Date range: ${escapeHtml(range)}</p>
 						${renderContributionGrid(days)}
+						<div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.5rem; color: #888;">
+							<span>Less</span>
+							<div style="display: flex; gap: 4px;">${legendSquares}</div>
+							<span>More</span>
+						</div>
 						<p class="meta streak" style="margin-top: 1rem; color: #ffab00; text-shadow: 0 0 5px #ffab00;">🔥 Longest Streak: ${longestStreak} days</p>
 					</article>`;
 			}
@@ -639,6 +820,8 @@
 			const recentBattlesEl = document.getElementById("recent-battles") as HTMLElement | null;
 			const historyListEl = document.getElementById("history-list") as HTMLElement | null;
 			const clearHistoryBtn = document.getElementById("clear-history-btn") as HTMLButtonElement | null;
+			const countdownOverlay = document.getElementById("countdown-overlay") as HTMLElement | null;
+			const countdownText = document.getElementById("countdown-text") as HTMLElement | null;
 
 			const usernameRegex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
 
@@ -724,6 +907,38 @@
 			// Load history on mount
 			loadHistory();
 
+			async function runCountdown(): Promise<void> {
+				return new Promise((resolve) => {
+					if (!countdownOverlay || !countdownText) {
+						resolve();
+						return;
+					}
+
+					countdownOverlay.classList.add("active");
+					const steps = ["3...", "2...", "1...", "⚡ FIGHT! ⚡"];
+					let i = 0;
+
+					function nextStep() {
+						if (i >= steps.length) {
+							countdownOverlay!.classList.remove("active");
+							resolve();
+							return;
+						}
+
+						countdownText!.textContent = steps[i];
+						countdownText!.classList.remove("animate");
+						void countdownText!.offsetWidth; // trigger reflow
+						countdownText!.classList.add("animate");
+						if (i < 3) playCoin(); // Play sound per countdown tick if desired
+
+						i++;
+						setTimeout(nextStep, 1000);
+					}
+
+					nextStep();
+				});
+			}
+
 			async function runBattle(event?: SubmitEvent) {
 				event?.preventDefault();
 
@@ -740,6 +955,7 @@
 				player1El.classList.remove("error");
 				player2El.classList.remove("error");
 				resultsEl.innerHTML = "";
+				resultsEl.classList.remove("slide-in");
 
 				const err1 = validateUsername(u1);
 				const err2 = validateUsername(u2);
@@ -765,6 +981,8 @@
 				feedbackEl.textContent = "Fetching contribution data...";
 				resultsEl.innerHTML = "";
 
+				await runCountdown();
+
 				try {
 					const [d1, d2] = await Promise.all([
 						fetchContributions(u1),
@@ -782,17 +1000,42 @@
 								<div class="vs-badge" aria-label="Versus">VS</div>
 								${renderCard("Player 2", u2, d2)}
 							</div>
+							<div style="text-align: center; margin-top: 1rem;">
+								<button id="share-btn" type="button" style="padding: 0.6rem 1rem; font-size: 0.7rem; background: transparent; border: 2px solid var(--neon-purple); color: var(--neon-purple); cursor: pointer; font-family: 'Press Start 2P', cursive; text-transform: uppercase; transition: all 0.3s ease;" onmouseover="this.style.background='var(--neon-purple)'; this.style.color='#000'; this.style.boxShadow='0 0 15px var(--neon-purple)';" onmouseout="this.style.background='transparent'; this.style.color='var(--neon-purple)'; this.style.boxShadow='none';">📋 Share Results</button>
+								<div id="share-confirm" style="opacity: 0; transition: opacity 0.3s; color: var(--neon-green); font-size: 0.6rem; margin-top: 0.5rem; text-shadow: 0 0 5px var(--neon-green);">Copied to clipboard!</div>
+							</div>
 						</div>`;
+					resultsEl.classList.add("slide-in");
 					feedbackEl.textContent = "";
 					feedbackEl.className = "feedback";
 					
+					// Attach share button listener natively
+					const shareBtn = document.getElementById("share-btn");
+					const shareConfirm = document.getElementById("share-confirm");
+					if (shareBtn) {
+						shareBtn.addEventListener("click", () => {
+							const textToShare = `Mona Mayhem Battle! 👾\n@${u1} (${total1.toLocaleString()}) ⚔️ @${u2} (${total2.toLocaleString()})\n${winnerText(u1, total1, u2, total2)}`;
+							navigator.clipboard.writeText(textToShare).then(() => {
+								if (shareConfirm) {
+									shareConfirm.style.opacity = "1";
+									setTimeout(() => { shareConfirm.style.opacity = "0"; }, 2000);
+								}
+							}).catch(err => {
+								console.error('Failed to copy text: ', err);
+							});
+						});
+					}
+					
 					// Save result to localStorage
 					saveToHistory(u1, u2, total1, total2, winnerText(u1, total1, u2, total2));
+					
+					playPowerUp();
 				} catch (err) {
 					feedbackEl.className = "feedback error";
 					feedbackEl.textContent =
 						err instanceof Error ? err.message : "Something went wrong.";
 					resultsEl.innerHTML = "";
+					playExplosion();
 				} finally {
 					buttonEl.disabled = false;
 				}
