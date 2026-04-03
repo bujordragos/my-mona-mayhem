@@ -198,10 +198,22 @@
 
 			.winner {
 				margin: 0;
-				font-size: 1.2rem;
+				font-size: 1.5rem;
 				text-align: center;
 				color: #fff;
-				text-shadow: 0 0 10px #fff, 0 0 20px #eebb00;
+				text-transform: uppercase;
+				animation: winnerPulse 1s ease-in-out infinite alternate;
+			}
+			
+			@keyframes winnerPulse {
+				from { 
+					transform: scale(1); 
+					text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #eebb00, 0 0 40px #eebb00; 
+				}
+				to { 
+					transform: scale(1.1); 
+					text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #eebb00, 0 0 60px #eebb00, 0 0 100px #eebb00; 
+				}
 			}
 
 			.cards {
@@ -387,6 +399,14 @@
 			<div id="feedback" class="feedback" role="status" aria-live="polite"></div>
 
 			<section id="results" class="results" aria-live="polite"></section>
+
+			<section id="recent-battles" class="recent-battles" aria-live="polite" style="display: none; margin-top: 3rem;">
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+					<h2 style="margin: 0; font-size: 1rem; color: var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple);">Recent Battles</h2>
+					<button id="clear-history-btn" style="font-size: 0.6rem; padding: 0.5rem; border-color: #ff3366; color: #ff3366;">Clear History</button>
+				</div>
+				<div id="history-list" style="display: grid; gap: 1rem;"></div>
+			</section>
 		</main>
 
 		<script>
@@ -405,6 +425,15 @@
 			interface ContributionWeekV2 {
 				first_day: string;
 				contribution_days: ContributionDayV2[];
+			}
+
+			interface BattleHistoryEntry {
+				player1: string;
+				player2: string;
+				total1: number;
+				total2: number;
+				winner: string;
+				timestamp: string;
 			}
 
 			interface ContributionData {
@@ -548,10 +577,31 @@
 					.replaceAll("'", "&#39;");
 			}
 
+			function calculateLongestStreak(days: ContributionDay[]): number {
+				if (!days || days.length === 0) return 0;
+				const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
+				
+				let maxStreak = 0;
+				let currentStreak = 0;
+				
+				for (const day of sortedDays) {
+					if ((day.count ?? 0) > 0) {
+						currentStreak++;
+						if (currentStreak > maxStreak) {
+							maxStreak = currentStreak;
+						}
+					} else {
+						currentStreak = 0;
+					}
+				}
+				return maxStreak;
+			}
+
 			function renderCard(label: string, username: string, data: ContributionData): string {
 				const total = totalFromData(data);
 				const days = flattenDays(data);
 				const range = rangeFromData(data, days);
+				const longestStreak = calculateLongestStreak(days);
 
 				return `
 					<article class="card">
@@ -559,15 +609,16 @@
 						<p class="meta">Total contributions: ${total.toLocaleString()}</p>
 						<p class="meta">Date range: ${escapeHtml(range)}</p>
 						${renderContributionGrid(days)}
+						<p class="meta streak" style="margin-top: 1rem; color: #ffab00; text-shadow: 0 0 5px #ffab00;">🔥 Longest Streak: ${longestStreak} days</p>
 					</article>`;
 			}
 
 			function winnerText(player1: string, total1: number, player2: string, total2: number): string {
 				if (total1 === total2) {
-					return "Draw";
+					return "🤝 IT'S A TIE! 🤝";
 				}
 
-				return total1 > total2 ? `${player1} wins` : `${player2} wins`;
+				return total1 > total2 ? `🏆 ${player1} WINS! 🏆` : `🏆 ${player2} WINS! 🏆`;
 			}
 
 			async function fetchContributions(username: string): Promise<ContributionData> {
@@ -585,6 +636,9 @@
 			const feedbackEl = document.getElementById("feedback") as HTMLElement | null;
 			const resultsEl = document.getElementById("results") as HTMLElement | null;
 			const buttonEl = document.getElementById("battle-btn") as HTMLButtonElement | null;
+			const recentBattlesEl = document.getElementById("recent-battles") as HTMLElement | null;
+			const historyListEl = document.getElementById("history-list") as HTMLElement | null;
+			const clearHistoryBtn = document.getElementById("clear-history-btn") as HTMLButtonElement | null;
 
 			const usernameRegex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
 
@@ -593,6 +647,82 @@
 				if (!usernameRegex.test(username)) return `Invalid GitHub username format: @${username}`;
 				return null;
 			}
+
+			function loadHistory() {
+				if (!recentBattlesEl || !historyListEl) return;
+				const historyStr = localStorage.getItem("mona-mayhem-history");
+				if (!historyStr) {
+					recentBattlesEl.style.display = "none";
+					return;
+				}
+
+				try {
+					const history: BattleHistoryEntry[] = JSON.parse(historyStr);
+					if (!Array.isArray(history) || history.length === 0) {
+						recentBattlesEl.style.display = "none";
+						return;
+					}
+
+					historyListEl.innerHTML = history.map(entry => `
+						<div class="card" style="padding: 1rem; border-color: var(--border-color); background: #0c0c16; font-size: 0.6rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+							<div style="flex: 1; min-width: 150px;">
+								<span style="color: var(--neon-green)">@${escapeHtml(entry.player1)}</span> (${entry.total1.toLocaleString()}) 
+								<span style="color: var(--neon-purple); margin: 0 0.5rem;">VS</span> 
+								<span style="color: var(--neon-green)">@${escapeHtml(entry.player2)}</span> (${entry.total2.toLocaleString()})
+							</div>
+							<div style="flex: 1; text-align: center; color: #eebb00; min-width: 100px;">
+								Result: ${escapeHtml(entry.winner)}
+							</div>
+							<div style="color: #666; text-align: right; min-width: 120px;">
+								${escapeHtml(entry.timestamp)}
+							</div>
+						</div>
+					`).join("");
+					recentBattlesEl.style.display = "block";
+				} catch (e) {
+					console.error("Failed to load history", e);
+					localStorage.removeItem("mona-mayhem-history");
+					recentBattlesEl.style.display = "none";
+				}
+			}
+
+			function saveToHistory(player1: string, player2: string, total1: number, total2: number, winner: string) {
+				const historyStr = localStorage.getItem("mona-mayhem-history");
+				let history: BattleHistoryEntry[] = [];
+				if (historyStr) {
+					try {
+						history = JSON.parse(historyStr);
+					} catch (e) {
+						history = [];
+					}
+				}
+
+				const now = new Date().toLocaleString(undefined, { 
+					year: 'numeric', month: 'short', day: 'numeric', 
+					hour: 'numeric', minute: '2-digit' 
+				});
+
+				const rawWinner = total1 === total2 ? "Tie" : (total1 > total2 ? player1 : player2);
+
+				history.unshift({
+					player1, player2, total1, total2, winner: rawWinner, timestamp: now
+				});
+
+				if (history.length > 10) {
+					history = history.slice(0, 10);
+				}
+
+				localStorage.setItem("mona-mayhem-history", JSON.stringify(history));
+				loadHistory();
+			}
+
+			clearHistoryBtn?.addEventListener("click", () => {
+				localStorage.removeItem("mona-mayhem-history");
+				loadHistory();
+			});
+
+			// Load history on mount
+			loadHistory();
 
 			async function runBattle(event?: SubmitEvent) {
 				event?.preventDefault();
@@ -655,6 +785,9 @@
 						</div>`;
 					feedbackEl.textContent = "";
 					feedbackEl.className = "feedback";
+					
+					// Save result to localStorage
+					saveToHistory(u1, u2, total1, total2, winnerText(u1, total1, u2, total2));
 				} catch (err) {
 					feedbackEl.className = "feedback error";
 					feedbackEl.textContent =
