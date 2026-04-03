@@ -17,6 +17,7 @@
 - Build production output: `npm run build`
 - Preview production build: `npm run preview`
 - Run Astro CLI directly when needed: `npm run astro`
+- No automated test command is configured in this scaffold.
 
 ## Astro Best Practices For This Repo
 
@@ -36,6 +37,7 @@
 ## Useful References
 
 - Project setup and context: `README.md`
+- Workshop learning path (reference only, do not duplicate into product tasks): `workshop/`
 - Astro runtime config: `astro.config.mjs`
 - TypeScript config: `tsconfig.json`
 - Main page scaffold: `src/pages/index.astro`
