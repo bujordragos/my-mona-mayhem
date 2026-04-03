@@ -101,6 +101,11 @@
 				gap: 1rem;
 			}
 
+			.battle-results {
+				display: grid;
+				gap: 0.75rem;
+			}
+
 			.winner {
 				margin: 0;
 				font-weight: 700;
@@ -109,6 +114,19 @@
 			.cards {
 				display: grid;
 				gap: 1rem;
+			}
+
+			.vs-badge {
+				display: grid;
+				place-items: center;
+				font-weight: 700;
+				color: #f0b429;
+				border: 1px solid #30363d;
+				border-radius: 999px;
+				height: 2.25rem;
+				width: 2.25rem;
+				margin: 0 auto;
+				background: #11151b;
 			}
 
 			.card {
@@ -128,6 +146,24 @@
 				color: #c9d1d9;
 			}
 
+			.meta {
+				font-size: 0.9rem;
+			}
+
+			.contribution-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
+				gap: 3px;
+				margin-top: 0.75rem;
+			}
+
+			.day {
+				width: 100%;
+				aspect-ratio: 1 / 1;
+				border-radius: 2px;
+				border: 1px solid #0d1117;
+			}
+
 			@media (min-width: 700px) {
 				.battle-form {
 					grid-template-columns: 1fr 1fr auto;
@@ -135,7 +171,12 @@
 				}
 
 				.cards {
-					grid-template-columns: repeat(2, minmax(0, 1fr));
+					grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+					align-items: start;
+				}
+
+				.vs-badge {
+					margin-top: 1.25rem;
 				}
 			}
 		</style>
@@ -178,6 +219,7 @@
 			interface ContributionDay {
 				date: string;
 				count: number;
+				color?: string;
 			}
 
 			interface ContributionData {
@@ -203,6 +245,61 @@
 				return flattenDays(data).reduce((sum, day) => sum + (day.count ?? 0), 0);
 			}
 
+			const GITHUB_COLORS = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
+
+			function colorFromCount(count: number): string {
+				if (count <= 0) return GITHUB_COLORS[0];
+				if (count <= 3) return GITHUB_COLORS[1];
+				if (count <= 6) return GITHUB_COLORS[2];
+				if (count <= 9) return GITHUB_COLORS[3];
+				return GITHUB_COLORS[4];
+			}
+
+			function isHexColor(value: string | undefined): value is string {
+				if (!value) return false;
+				return /^#[0-9a-f]{6}$/i.test(value);
+			}
+
+			function formatDate(value: string): string {
+				const parsed = new Date(value);
+				if (Number.isNaN(parsed.getTime())) {
+					return value;
+				}
+
+				return parsed.toLocaleDateString(undefined, {
+					year: "numeric",
+					month: "short",
+					day: "numeric",
+				});
+			}
+
+			function dateRangeFromDays(days: ContributionDay[]): string {
+				if (days.length === 0) {
+					return "No contribution days returned";
+				}
+
+				const sorted = [...days].sort((a, b) =>
+					a.date.localeCompare(b.date),
+				);
+				return `${formatDate(sorted[0].date)} - ${formatDate(sorted[sorted.length - 1].date)}`;
+			}
+
+			function renderContributionGrid(days: ContributionDay[]): string {
+				if (days.length === 0) {
+					return "<p class=\"meta\">No contribution data available.</p>";
+				}
+
+				const squares = days
+					.map((day) => {
+						const color = isHexColor(day.color) ? day.color : colorFromCount(day.count ?? 0);
+						const label = `${formatDate(day.date)}: ${day.count ?? 0} contributions`;
+						return `<div class=\"day\" style=\"background:${color}\" title=\"${escapeHtml(label)}\" aria-label=\"${escapeHtml(label)}\"></div>`;
+					})
+					.join("");
+
+				return `<div class=\"contribution-grid\">${squares}</div>`;
+			}
+
 			function escapeHtml(value: string): string {
 				return value
 					.replaceAll("&", "&amp;")
@@ -214,13 +311,15 @@
 
 			function renderCard(label: string, username: string, data: ContributionData): string {
 				const total = totalFromData(data);
-				const days = flattenDays(data).length;
+				const days = flattenDays(data);
+				const range = dateRangeFromDays(days);
 
 				return `
 					<article class="card">
 						<h2>${escapeHtml(label)}: @${escapeHtml(username)}</h2>
-						<p>Total contributions: ${total.toLocaleString()}</p>
-						<p>Days in response: ${days.toLocaleString()}</p>
+						<p class="meta">Total contributions: ${total.toLocaleString()}</p>
+						<p class="meta">Date range: ${escapeHtml(range)}</p>
+						${renderContributionGrid(days)}
 					</article>`;
 			}
 
@@ -282,10 +381,13 @@
 					const total2 = totalFromData(d2);
 
 					resultsEl.innerHTML = `
-						<p class="winner">${escapeHtml(winnerText(u1, total1, u2, total2))}</p>
-						<div class="cards">
-							${renderCard("Player 1", u1, d1)}
-							${renderCard("Player 2", u2, d2)}
+						<div class="battle-results">
+							<p class="winner">${escapeHtml(winnerText(u1, total1, u2, total2))}</p>
+							<div class="cards">
+								${renderCard("Player 1", u1, d1)}
+								<div class="vs-badge" aria-label="Versus">VS</div>
+								${renderCard("Player 2", u2, d2)}
+							</div>
 						</div>`;
 					feedbackEl.textContent = "";
 					feedbackEl.className = "feedback";
