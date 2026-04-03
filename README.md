@@ -98,6 +98,45 @@ Then follow the [workshop guide →](workshop/00-overview.md)
 
 ---
 
+## 🔌 API: Contributions Proxy
+
+The app uses a server-side proxy endpoint to fetch contribution data from GitHub and avoid browser CORS limitations.
+
+**Route**
+
+- `GET /api/contributions/:username`
+
+**Upstream source**
+
+- `https://github.com/{username}.contribs`
+
+**Query params**
+
+- `refresh=true` or `refresh=1` bypasses a fresh cache hit and forces an upstream fetch.
+
+**Response behavior**
+
+- `200` on success with JSON payload from GitHub.
+- `400` when `:username` is invalid.
+- `404` when the GitHub user does not exist.
+- `502` for upstream failures or invalid upstream JSON.
+- `504` when the upstream request times out.
+
+**Caching strategy**
+
+- In-memory cache keyed by username.
+- TTL: 5 minutes per cache entry.
+- Capacity bound: 500 entries (oldest entries trimmed first).
+- Stale fallback: if upstream fails and cached data exists, stale data is returned.
+
+**Response headers**
+
+- `Cache-Control: public, max-age=300, s-maxage=300, stale-while-revalidate=60`
+- `X-Cache: HIT | MISS | STALE | SKIP`
+- `Warning: 110 - Response is stale` when stale fallback is served.
+
+---
+
 ## License
 
 [MIT](LICENSE)

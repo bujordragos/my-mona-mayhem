@@ -36,6 +36,17 @@ const createJsonResponse = (
 const isAbortError = (error: unknown): boolean =>
   error instanceof DOMException && error.name === "AbortError";
 
+const shouldBypassCache = (url: URL): boolean => {
+  const refresh = url.searchParams.get("refresh")?.toLowerCase();
+  return refresh === "1" || refresh === "true";
+};
+
+const createStaleResponse = (cached: CacheEntry): Response =>
+  createJsonResponse(cached.data, 200, {
+    Warning: "110 - Response is stale",
+    "X-Cache": "STALE",
+  });
+
 const trimCache = () => {
   if (contributionCache.size <= MAX_CACHE_ENTRIES) {
     return;
@@ -47,7 +58,7 @@ const trimCache = () => {
   }
 };
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, url }) => {
   const username = params.username?.trim();
   if (!username || !USERNAME_PATTERN.test(username)) {
     return createJsonResponse({ error: "Invalid GitHub username." }, 400, {
@@ -58,8 +69,9 @@ export const GET: APIRoute = async ({ params }) => {
   const cacheKey = username.toLowerCase();
   const now = Date.now();
   const cached = contributionCache.get(cacheKey);
+  const bypassCache = shouldBypassCache(url);
 
-  if (cached && cached.expiresAt > now) {
+  if (!bypassCache && cached && cached.expiresAt > now) {
     return createJsonResponse(cached.data, 200, { "X-Cache": "HIT" });
   }
 
@@ -85,6 +97,10 @@ export const GET: APIRoute = async ({ params }) => {
     }
 
     if (!upstreamResponse.ok) {
+      if (cached) {
+        return createStaleResponse(cached);
+      }
+
       return createJsonResponse(
         {
           error: "GitHub upstream request failed.",
@@ -99,6 +115,10 @@ export const GET: APIRoute = async ({ params }) => {
     try {
       payload = await upstreamResponse.json();
     } catch {
+      if (cached) {
+        return createStaleResponse(cached);
+      }
+
       return createJsonResponse(
         { error: "Invalid JSON received from GitHub." },
         502,
@@ -115,10 +135,7 @@ export const GET: APIRoute = async ({ params }) => {
     return createJsonResponse(payload, 200, { "X-Cache": "MISS" });
   } catch (error) {
     if (cached) {
-      return createJsonResponse(cached.data, 200, {
-        Warning: "110 - Response is stale",
-        "X-Cache": "STALE",
-      });
+      return createStaleResponse(cached);
     }
 
     if (isAbortError(error)) {
